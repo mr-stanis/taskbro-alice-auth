@@ -55,9 +55,14 @@
   <h2>Привязка аккаунта TaskBro</h2>
   <p class="muted">Введите одноразовый код из приложения TaskBro.</p>
 
-  <form id="form">
+  <form id="form" method="post" action="https://yjeiwfpoutiinoszwpcs.supabase.co/functions/v1/taskbro-oauth/oauth/authorize">
+    <input type="hidden" id="client_id" name="client_id" />
+    <input type="hidden" id="redirect_uri" name="redirect_uri" />
+    <input type="hidden" id="state" name="state" />
+    <input type="hidden" id="scope" name="scope" />
+    <input type="hidden" id="response_type" name="response_type" />
     <label for="code">Код привязки</label>
-    <input id="code" maxlength="16" autocomplete="one-time-code" required />
+    <input id="code" name="code" maxlength="16" autocomplete="one-time-code" required />
     <button type="submit">Связать аккаунт</button>
   </form>
 
@@ -65,45 +70,23 @@
 
   <script>
     const params = new URLSearchParams(window.location.search);
-    const oauthPostURL = "https://yjeiwfpoutiinoszwpcs.supabase.co/functions/v1/taskbro-oauth/oauth/authorize";
+    document.getElementById("client_id").value = params.get("client_id") || "";
+    document.getElementById("redirect_uri").value = params.get("redirect_uri") || "";
+    document.getElementById("state").value = params.get("state") || "";
+    document.getElementById("scope").value = params.get("scope") || "";
+    document.getElementById("response_type").value = params.get("response_type") || "code";
 
-    document.getElementById("form").addEventListener("submit", async (event) => {
-      event.preventDefault();
+    document.getElementById("form").addEventListener("submit", (event) => {
       const errorNode = document.getElementById("error");
       errorNode.textContent = "";
-
-      const code = (document.getElementById("code").value || "").trim().toUpperCase();
-      if (!code) {
+      const codeInput = document.getElementById("code");
+      const normalized = (codeInput.value || "").trim().toUpperCase();
+      if (!normalized) {
+        event.preventDefault();
         errorNode.textContent = "Введите код привязки.";
         return;
       }
-
-      const body = new URLSearchParams();
-      body.set("code", code);
-      body.set("client_id", params.get("client_id") || "");
-      body.set("redirect_uri", params.get("redirect_uri") || "");
-      body.set("state", params.get("state") || "");
-      body.set("scope", params.get("scope") || "");
-      body.set("response_type", params.get("response_type") || "code");
-
-      try {
-        const response = await fetch(oauthPostURL, {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: body.toString(),
-          redirect: "manual"
-        });
-
-        const redirectLocation = response.headers.get("location");
-        if (redirectLocation) {
-          window.location.href = redirectLocation;
-          return;
-        }
-
-        errorNode.textContent = "Не удалось привязать аккаунт. Проверьте код и попробуйте снова.";
-      } catch {
-        errorNode.textContent = "Сетевая ошибка. Попробуйте ещё раз.";
-      }
+      codeInput.value = normalized;
     });
   </script>
 </body>
